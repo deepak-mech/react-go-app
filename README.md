@@ -1,1 +1,1 @@
-# react-go-app
+# GO Application for Backend
