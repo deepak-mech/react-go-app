@@ -8,7 +8,6 @@ pipeline {
     AWS_ACCOUNT_ID="897708493501"
     AWS_DEFAULT_REGION="us-east-1" 
     IMAGE_REPO_NAME="go-backend"
-    IMAGE_TAG="${BUILD_NUMBER}"
     REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
     EXECUTION_ROLE_ARN = "arn:aws:iam::897708493501:role/ecsTaskExecutionRole"
   }
@@ -21,8 +20,7 @@ pipeline {
             steps {
                 script {
                 sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-                }
-                 
+                }                 
             }
         }
         
@@ -48,10 +46,11 @@ pipeline {
                 sh "docker tag ${IMAGE_REPO_NAME}:${IMAGE_TAG} ${REPOSITORY_URI}:$IMAGE_TAG"
                 sh "docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}"
          }
-        }
-      }
+       }
     }
-        stage('Deploy Image to ECS') {
+     
+    // Deploy Image to ECS
+    stage('Deploy Image to ECS') {
             steps{
                 // prepare task definition file
                 sh """sed -e "s;%REPOSITORY_URI%;${REPOSITORY_URI};g" -e "s;%IMAGE_TAG%;${IMAGE_TAG};g" -e "s;%TASK_FAMILY%;${TASK_FAMILY};g" -e "s;%SERVICE_NAME%;${SERVICE_NAME};g" -e "s;%EXECUTION_ROLE_ARN%;${EXECUTION_ROLE_ARN};g" taskdef_template.json > taskdef_${IMAGE_TAG}.json"""
@@ -66,11 +65,13 @@ pipeline {
                 }
             }
         }
-        stage('Remove docker image') {
+     
+     // Remove Image
+      stage('Remove docker image') {
             steps{
                 // Remove images
                 sh "docker rmi $REPOSITORY_URI:$IMAGE_TAG"
             }
-        }
-    }
+       } 
+   }
 }
